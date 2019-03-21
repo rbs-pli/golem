@@ -1,6 +1,7 @@
 from copy import deepcopy
 from pathlib import Path, PurePath
 from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, Type
+import logging
 
 from golem_messages.message import ComputeTaskDef
 from golem_messages.datastructures.p2p import Node
@@ -16,8 +17,12 @@ from apps.wasm.environment import WasmTaskEnvironment
 from golem.task.taskbase import Task
 from golem.task.taskstate import SubtaskStatus
 
+logger = logging.getLogger("apps.wasm")
+
 
 class WasmTaskOptions(Options):
+    VERIFICATION_FACTOR = 2
+
     class SubtaskOptions:
         def __init__(self, name: str, exec_args: List[str],
                      output_file_paths: List[str]) -> None:
@@ -35,14 +40,15 @@ class WasmTaskOptions(Options):
 
     def _subtasks(self) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
         for subtask_name, subtask_opts in self.subtasks.items():
-            yield subtask_name, {
-                'name': subtask_name,
-                'js_name': self.js_name,
-                'wasm_name': self.wasm_name,
-                'exec_args': subtask_opts.exec_args,
-                'input_dir_name': PurePath(self.input_dir).name,
-                'output_file_paths': subtask_opts.output_file_paths,
-            }
+            for _ in range(WasmTaskOptions.VERIFICATION_FACTOR):
+                yield subtask_name, {
+                    'name': subtask_name,
+                    'js_name': self.js_name,
+                    'wasm_name': self.wasm_name,
+                    'exec_args': subtask_opts.exec_args,
+                    'input_dir_name': PurePath(self.input_dir).name,
+                    'output_file_paths': subtask_opts.output_file_paths,
+                }
 
     def get_subtask_iterator(self) -> Iterator[Tuple[str, Dict[str, Any]]]:
         # The generator has to be listed first because the resulting iterator
@@ -60,21 +66,8 @@ class WasmTaskDefinition(TaskDefinition):
         self.resources = [self.options.input_dir]
 
 
-class WasmTaskVerifier(CoreVerifier):
-    def __init__(self,
-                 verification_data: Optional[Dict[str, Any]] = None) -> None:
-        super().__init__()
-        self.subtask_info = None
-        self.results = None
-
-        if verification_data:
-            self.subtask_info = verification_data['subtask_info']
-            self.results = verification_data['results']
-
-
 class WasmTask(CoreTask):
     ENVIRONMENT_CLASS = WasmTaskEnvironment
-    VERIFIER_CLASS = WasmTaskVerifier
 
     JOB_ENTRYPOINT = 'python3 /golem/scripts/job.py'
 
@@ -87,6 +80,8 @@ class WasmTask(CoreTask):
         self.options: WasmTaskOptions = task_definition.options
         self.subtask_names: Dict[str, str] = {}
         self.subtask_iterator = self.options.get_subtask_iterator()
+
+        self.results: Dict[str, List[list]] = {}
 
     def get_next_subtask_extra_data(self) -> Tuple[str, Dict[str, Any]]:
         next_subtask_name, next_subtask_params = next(self.subtask_iterator)
@@ -113,6 +108,35 @@ class WasmTask(CoreTask):
 
         return Task.ExtraData(ctd=ctd)
 
+    def computation_finished(self, subtask_id, task_result,
+                             verification_finished=None):
+        if not self.should_accept(subtask_id):
+            logger.info("Not accepting results for %s", subtask_id)
+            return
+        self.interpret_task_results(subtask_id, task_result)
+
+        results = self.results.get(self.subtask_names[subtask_id])
+        if len(results) < 2:
+            return
+
+        # VbR time!
+        if self.verify_results(results):
+            self.accept_results(subtask_id, results[0])
+        else:
+            self.computation_failed(subtask_id)
+
+    def verify_results(self, results: List[list]) -> bool:
+        for r1, r2 in zip(*results):
+            with open(r1, 'rb') as f1, open(r2, 'rb') as f2:
+                b1 = f1.read()
+                b2 = f2.read()
+                if b1 != b2:
+                    logger.info("Verification of task failed")
+                    return False
+
+        logger.info("Verification of task was successful")
+        return True
+
     def accept_results(self, subtask_id: str, result_files: List[str]) -> None:
         super().accept_results(subtask_id, result_files)
         self.num_tasks_received += 1
@@ -124,7 +148,7 @@ class WasmTask(CoreTask):
 
         for result_file in result_files:
             output_file_path = output_dir_path / PurePath(result_file).name
-            with open(result_file, 'rb') as f_in,\
+            with open(result_file, 'rb') as f_in, \
                     open(output_file_path, 'wb') as f_out:
                 f_out.write(f_in.read())
 
@@ -140,6 +164,22 @@ class WasmTask(CoreTask):
         return self._new_compute_task_def(
             subtask_id=self.create_subtask_id(), extra_data=next_extra_data
         )
+
+    def interpret_task_results(self, subtask_id, task_results, sort=True):
+        """Filter out ".log" files from received results.
+        Log files should represent stdout and stderr from computing machine.
+        Other files should represent subtask results.
+        :param subtask_id: id of a subtask for which results are received
+        :param task_results: it may be a list of files
+        :param bool sort: *default: True* Sort results, if set to True
+        """
+        self.stdout[subtask_id] = ""
+        self.stderr[subtask_id] = ""
+        results = self.filter_task_results(task_results, subtask_id)
+        if sort:
+            results.sort()
+        name = self.subtask_names[subtask_id]
+        self.results.setdefault(name, []).append(results)
 
 
 class WasmTaskBuilder(CoreTaskBuilder):
