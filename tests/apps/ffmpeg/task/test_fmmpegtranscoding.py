@@ -13,24 +13,28 @@ from golem.docker.manager import DockerManager
 from golem.docker.task_thread import DockerTaskThread
 from golem.resource.dirmanager import DirManager
 from golem.testutils import TempDirFixture
-from tests.golem.docker.test_docker_image import DockerTestCase
 from tests.golem.docker.test_docker_job import TestDockerJob
 
 
-class TestffmpegTranscoding(TempDirFixture, DockerTestCase):
+class TestffmpegTranscoding(TempDirFixture):
     def setUp(self):
         super(TestffmpegTranscoding, self).setUp()
         self.RESOURCES = os.path.join(os.path.dirname(
             os.path.dirname(os.path.realpath(__file__))), 'resources')
-        self.RESOURCE_STREAM = os.path.join(self.RESOURCES, 'test_video2.mp4')
-        self.stream_operator = StreamOperator()
-        self.dir_manager = DirManager(self.tempdir)
+
         dm = DockerTaskThread.docker_manager = DockerManager.install()
         dm.update_config(
             status_callback=mock.Mock(),
             done_callback=mock.Mock(),
             work_dir=self.new_path,
             in_background=True)
+
+
+
+        self.RESOURCE_STREAM = os.path.join(self.RESOURCES, 'test_video2.mp4')
+        self.stream_operator = StreamOperator()
+        self.dir_manager = DirManager(self.tempdir)
+
 
     def test_split_video(self):
         for parts in [1, 2]:

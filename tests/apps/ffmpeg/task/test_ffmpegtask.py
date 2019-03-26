@@ -24,14 +24,20 @@ class TestffmpegTask(TempDirFixture):
         super(TestffmpegTask, self).setUp()
         self.RESOURCES = os.path.join(os.path.dirname(
             os.path.dirname(os.path.realpath(__file__))), 'resources')
-        self.RESOURCE_STREAM = os.path.join(self.RESOURCES, 'test_video.mp4')
-        self.tt = ffmpegTaskTypeInfo()
+
+
         dm = DockerTaskThread.docker_manager = DockerManager.install()
         dm.update_config(
             status_callback=mock.Mock(),
             done_callback=mock.Mock(),
             work_dir=self.new_path,
             in_background=True)
+
+
+
+        self.RESOURCE_STREAM = os.path.join(self.RESOURCES, 'test_video.mp4')
+        self.tt = ffmpegTaskTypeInfo()
+
         td = self.tt.task_builder_type.build_definition(self.tt,
                                                         self._task_dictionary)
         self.ffmpeg_task = self.tt.task_builder_type(dt_p2p_factory.Node(), td,
