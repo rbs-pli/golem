@@ -1,9 +1,12 @@
 import os
+import os
+import shutil
 
 from apps.transcoding.common import TranscodingTaskBuilderException, \
     ffmpegException
 from apps.transcoding.ffmpeg.task import ffmpegTaskTypeInfo
 from golem.testutils import TestTaskIntegration
+from tests.apps.ffmpeg.task.ffprobe_report import FfprobeFormatReport
 
 
 class FfmpegIntegrationTestCase(TestTaskIntegration):
@@ -14,6 +17,10 @@ class FfmpegIntegrationTestCase(TestTaskIntegration):
             os.path.dirname(os.path.realpath(__file__))), 'resources')
         self.tt = ffmpegTaskTypeInfo()
         self.resource_stream = os.path.join(self.RESOURCES, 'test_video2.mp4')
+
+
+
+
 
     @staticmethod
     def _create_task_def(resource_stream, result_file):
@@ -36,8 +43,41 @@ class FfmpegIntegrationTestCase(TestTaskIntegration):
             }
         }
 
+    def tearDown(self):
+        super(FfmpegIntegrationTestCase, self).tearDown()
+
+        for element in os.listdir(self.RESOURCES):
+            if element in ['metadata_output', 'metadata_work']:
+                shutil.rmtree(os.path.join(self.RESOURCES, element))
+
 
 class TestffmpegIntegration(FfmpegIntegrationTestCase):
+
+    def test_compare_two_videos_with_different_streams(self):
+
+        source_path = os.path.join(self.RESOURCES, 'test5.mkv')
+        result_path = os.path.join(self.RESOURCES, 'test5_shuffled.mkv')
+
+        overrides = {'streams': {'stream_types': {'video': 1, 'audio': 2, 'subtitle': 8}}}
+
+        (report_new, report_referenced) = FfprobeFormatReport.build(source_path, result_path)
+
+        self.assertEqual({}, report_referenced.diff(report_new, overrides))
+
+
+    def test_split_and_merge_should_return_valid_video(self):
+
+        source_path = os.path.join(self.RESOURCES, 'test_video.mp4')
+        result_path = os.path.join(self.root_dir, 'test_simple_case.mp4')
+
+        task_def = self._create_task_def(self.resource_stream, result_path)
+        self.execute_task(task_def)
+
+        overrides = {'streams': {'stream_types': {'video': 1, 'audio': 2, 'subtitle': 8}}}
+        (report_new, report_referenced) = FfprobeFormatReport.build(source_path, result_path)
+        self.assertEqual({}, report_referenced.diff(report_new, overrides))
+
+
 
     def test_simple_case(self):
         result_file = os.path.join(self.root_dir, 'test_simple_case.mp4')
@@ -47,6 +87,8 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
 
         self.run_asserts([
             self.check_file_existence(result_file)])
+
+
 
     def test_nonexistent_output_dir(self):
         result_file = os.path.join(self.root_dir, 'nonexistent', 'path',

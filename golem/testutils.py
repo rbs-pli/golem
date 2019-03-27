@@ -189,8 +189,9 @@ class TempDirFixture(unittest.TestCase):
         return results
 
     def __remove_files(self):
-        if os.path.isdir(self.tempdir):
-            shutil.rmtree(self.tempdir)
+        pass
+        # if os.path.isdir(self.tempdir):
+        #     shutil.rmtree(self.tempdir)
 
 
 class DatabaseFixture(TempDirFixture):
@@ -387,5 +388,6 @@ class TestTaskIntegration(TempDirFixture):
 
     @classmethod
     def tearDownClass(cls):
-        if not TestTaskIntegration.TEST_FAILED:
-            shutil.rmtree(cls.root_dir)
+        pass
+        # if not TestTaskIntegration.TEST_FAILED:
+        #     shutil.rmtree(cls.root_dir)
