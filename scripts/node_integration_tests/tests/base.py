@@ -12,7 +12,7 @@ from ..helpers import get_testdir
 KEYSTORE_DIR = 'rinkeby/keys'
 
 
-def disable_key_reuse(test_function: Callable)-> Callable:
+def disable_key_reuse(test_function: Callable) -> Callable:
     @wraps(test_function)
     def wrap(*args, **kwargs) -> None:
         args[0].reuse_keys = False
@@ -49,16 +49,16 @@ class NodeTestBase:
         return self.id().replace(parent_name + '.', '')
 
     def _can_recycle_keys(self) -> bool:
-        return all([conftest.NodeKeyReuse.get().keys_ready, self.reuse_keys])
+        return conftest.NodeKeyReuse.get().keys_ready and self.reuse_keys
 
     def _run_test(self, playbook_class_path: str, *args, **kwargs):
-        cwd = pathlib.Path(os.path.realpath(__file__)).parent.parent
+        cwd = pathlib.Path(__file__).resolve().parent.parent
         test_args = [
             str(cwd / 'run_test.py'),
             playbook_class_path,
             *args,
-            '--provider-datadir', self.provider_datadir,
-            '--requestor-datadir', self.requestor_datadir,
+            '--datadir', 'provider', self.provider_datadir,
+            '--datadir', 'requestor', self.requestor_datadir,
         ]
         for k, v in kwargs.items():
             test_args.append('--' + k)

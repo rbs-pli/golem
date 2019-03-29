@@ -1,7 +1,14 @@
-from ..playbook_base import NodeTestPlaybook
+from typing import TYPE_CHECKING
+
+from ..test_base import DebugTest
+
+if TYPE_CHECKING:
+    from ..test_base import Config
 
 
-class RegularRun(NodeTestPlaybook):
-    provider_node_script = 'provider/debug'
-    requestor_node_script = 'requestor/debug'
-    task_settings = 'jpeg'
+class Jpeg(DebugTest):
+    @staticmethod
+    def get_config() -> 'Config':
+        config = DebugTest.get_config()
+        config.task_settings = 'jpeg'
+        return config

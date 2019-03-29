@@ -1,6 +1,5 @@
-from ..playbook_base import NodeTestPlaybook
+from ..test_base import DebugTest
 
 
-class RegularRun(NodeTestPlaybook):
-    provider_node_script = 'provider/debug'
-    requestor_node_script = 'requestor/debug'
+class RegularRun(DebugTest):
+    pass

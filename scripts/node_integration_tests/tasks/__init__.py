@@ -107,5 +107,5 @@ _TASK_SETTINGS = {
 }
 
 
-def get_settings(key: str):
+def get_settings(key: str) -> dict:
     return copy.deepcopy(_TASK_SETTINGS[key])

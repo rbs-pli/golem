@@ -1,43 +1,45 @@
-import time
-import typing
+from functools import partial
+from typing import Tuple, Type, TYPE_CHECKING
 
 from scripts.node_integration_tests import helpers
 
-from ..playbook_base import NodeTestPlaybook
+from ..test_base import DebugTest, NodeId
+
+if TYPE_CHECKING:
+    from ..playbook_base import NodeTestPlaybook
 
 
-class RegularRun(NodeTestPlaybook):
-    provider_node_script = 'provider/debug'
-    requestor_node_script = 'requestor/debug'
+class RegularRun(DebugTest):
+    @staticmethod
+    def get_playbook_class() -> 'Type[NodeTestPlaybook]':
+        from ..playbook_base import NodeTestPlaybook
 
-    def step_wait_task_finished(self):
-        verification_rejected = helpers.search_output(
-            self.provider_output_queue, '.*SubtaskResultsRejected.*'
-        )
+        class Playbook(NodeTestPlaybook):
+            def step_wait_task_finished(self):
+                verification_rejected = helpers.search_output(
+                    self.output_queues[NodeId.provider],
+                    '.*SubtaskResultsRejected.*'
+                )
 
-        if verification_rejected:
-            self.fail(verification_rejected.group(0))
-            return
+                if verification_rejected:
+                    self.fail(verification_rejected.group(0))
+                    return
 
-        def on_success(result):
-            if result['status'] == 'Finished':
-                print("Task finished.")
-                self.next()
-            elif result['status'] == 'Timeout':
-                self.fail("Task timed out :( ... ")
-            else:
-                print("{} ... ".format(result['status']))
-                time.sleep(10)
+                return super().step_wait_task_finished(NodeId.requestor)
 
-        return self.call_requestor('comp.task', self.task_id,
-                       on_success=on_success, on_error=self.print_error)
+            steps: Tuple = NodeTestPlaybook.initial_steps + (
+                partial(NodeTestPlaybook.step_create_task,
+                        node_id=NodeId.requestor),
+                partial(NodeTestPlaybook.step_get_task_id,
+                        node_id=NodeId.requestor),
+                partial(NodeTestPlaybook.step_get_task_status,
+                        node_id=NodeId.requestor),
+                step_wait_task_finished,
+                NodeTestPlaybook.step_verify_output,
+                partial(NodeTestPlaybook.step_get_subtasks,
+                        node_id=NodeId.requestor),
+                partial(NodeTestPlaybook.step_verify_node_income,
+                        node_id=NodeId.provider, from_node=NodeId.requestor),
+            )
 
-    steps: typing.Tuple = NodeTestPlaybook.initial_steps + (
-        NodeTestPlaybook.step_create_task,
-        NodeTestPlaybook.step_get_task_id,
-        NodeTestPlaybook.step_get_task_status,
-        step_wait_task_finished,
-        NodeTestPlaybook.step_verify_output,
-        NodeTestPlaybook.step_get_subtasks,
-        NodeTestPlaybook.step_verify_provider_income,
-    )
+        return Playbook

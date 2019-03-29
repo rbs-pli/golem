@@ -1,6 +1,15 @@
-from ..playbook_base import NodeTestPlaybook
+from typing import TYPE_CHECKING
+
+from ..test_base import DebugTest
+
+if TYPE_CHECKING:
+    from ..test_base import Config
 
 
-class NoConcent(NodeTestPlaybook):
-    provider_node_script = 'provider/no_concent'
-    requestor_node_script = 'requestor/no_concent'
+class NoConcent(DebugTest):
+    @staticmethod
+    def get_config() -> 'Config':
+        config = DebugTest.get_config()
+        for node_config in config.nodes.values():
+            node_config.concent = 'disabled'
+        return config
