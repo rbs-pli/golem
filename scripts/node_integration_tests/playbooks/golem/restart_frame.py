@@ -1,6 +1,6 @@
 import typing
 
-from ..base import NodeTestPlaybook
+from ..playbook_base import NodeTestPlaybook
 
 
 class RestartFrame(NodeTestPlaybook):

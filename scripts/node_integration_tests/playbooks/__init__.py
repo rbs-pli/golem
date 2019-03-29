@@ -1,6 +1,6 @@
 import sys
 
-from .base import NodeTestPlaybook
+from .playbook_base import NodeTestPlaybook
 
 
 def run_playbook(playbook_cls: NodeTestPlaybook, **kwargs):

@@ -3,7 +3,7 @@ import typing
 
 from scripts.node_integration_tests import helpers
 
-from ..base import NodeTestPlaybook
+from ..playbook_base import NodeTestPlaybook
 
 
 class RegularRun(NodeTestPlaybook):

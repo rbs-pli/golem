@@ -1,4 +1,4 @@
-from ..base import NodeTestPlaybook
+from ..playbook_base import NodeTestPlaybook
 
 
 class RegularRun(NodeTestPlaybook):
