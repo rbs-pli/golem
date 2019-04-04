@@ -10,6 +10,7 @@ import ffmpeg_commands as ffmpeg
 from m3u8_utils import create_and_dump_m3u8
 
 OUTPUT_DIR = "/golem/output"
+WORK_DIR = "/golem/work"
 RESOURCES_DIR = "/golem/resources"
 PARAMS_FILE = "params.json"
 
@@ -84,6 +85,16 @@ def do_split(path_to_stream, parts):
         json.dump(results, f)
 
 
+def do_extract_and_split(input_file, parts):
+    intermediate_file = adjust_path(
+        input_file,
+        dirname=WORK_DIR,
+        stem_suffix='[video-only]')
+
+    do_extract(input_file, intermediate_file, ['v'])
+    do_split(intermediate_file, parts)
+
+
 def do_transcode(track, targs, output, use_playlist):
     ffmpeg.transcode_video(track, targs, output, use_playlist)
 
@@ -146,6 +157,16 @@ def do_replace(input_file,
         stream_type)
 
 
+def do_merge_and_replace(input_file, chunks, output_file):
+    intermediate_file = adjust_path(
+        output_file,
+        dirname=WORK_DIR,
+        stem_suffix='[video-only]')
+
+    do_merge(chunks, intermediate_file)
+    do_replace(input_file, intermediate_file, output_file, 'v')
+
+
 def compute_metric(cmd, function):
     video_path = os.path.join(RESOURCES_DIR, cmd["video"])
     reference_path = os.path.join(RESOURCES_DIR, cmd["reference"])
@@ -184,6 +205,10 @@ def run_ffmpeg(params):
         do_split(
             params['path_to_stream'],
             params['parts'])
+    elif params['command'] == "extract_and_split":
+        do_extract_and_split(
+            params['input_file'],
+            params['parts'])
     elif params['command'] == "transcode":
         do_transcode(
             params['track'],
@@ -200,6 +225,11 @@ def run_ffmpeg(params):
             params['replacement_source'],
             params['output_file'],
             params['stream_type'])
+    elif params['command'] == "merge_and_replace":
+        do_merge_and_replace(
+            params['input_file'],
+            params['chunks'],
+            params['output_file'])
     elif params['command'] == "compute-metrics":
         compute_metrics(
             params["metrics_params"])
