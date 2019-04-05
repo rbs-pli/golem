@@ -129,7 +129,7 @@ class TranscodingTask(CoreTask):
         output_basename = os.path.basename(self.task_definition.output_file)
         merged_basename = adjust_path(
             output_basename,
-            stem_suffix=VIDEO_ONLY_CONTAINER_SUFFIX)
+            stem_suffix=VIDEO_ONLY_CONTAINER_SUFFIX + '_TC')
 
         assert len(self.task_definition.resources) == 1, \
             "Assumption: input file is the only resource in a transcoding task"
