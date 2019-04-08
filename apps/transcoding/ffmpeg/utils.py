@@ -81,7 +81,7 @@ class StreamOperator:
             "Caller is responsible for ensuring that input file exists."
 
         host_dirs = {
-            'tmp': dir_manager.get_task_temporary_dir(task_id, create=False),
+            'tmp': dir_manager.get_task_temporary_dir(task_id),
             'output': dir_manager.get_task_output_dir(task_id),
         }
 
