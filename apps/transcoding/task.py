@@ -93,8 +93,8 @@ class TranscodingTask(CoreTask):
             logger.warning('{} subtasks was requested but video splitting '
                            'process resulted in {} chunks.'
                            .format(self.total_tasks, len(chunks)))
-        streams = list(map(lambda x: x[0] if os.path.isabs(x[0]) else os.path
-                           .join(task_output_dir, x[0]), chunks))
+        streams = list(map(lambda x: x if os.path.isabs(x) else os.path
+                           .join(task_output_dir, x), chunks))
         self.task_resources = streams
         self.chunks = streams
         self.total_tasks = len(chunks)

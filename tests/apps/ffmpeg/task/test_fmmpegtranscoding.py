@@ -57,9 +57,9 @@ class TestffmpegTranscoding(TempDirFixture, DockerTestCase):
             self.dir_manager, task_id)
         self.assertEqual(len(chunks), parts)
         self.assertEqual(
-            set(os.path.splitext(chunk[0])[1] for chunk in chunks),
+            set(os.path.splitext(chunk)[1] for chunk in chunks),
             {'.mp4'})
-        segments = [os.path.join(output_dir, chunk[0]) for chunk in chunks]
+        segments = [os.path.join(output_dir, chunk) for chunk in chunks]
 
         assert len(segments) == parts
         tc_segments = list()
