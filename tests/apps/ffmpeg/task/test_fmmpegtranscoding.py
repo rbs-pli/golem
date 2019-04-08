@@ -90,8 +90,7 @@ class TestffmpegTranscoding(TempDirFixture, DockerTestCase):
     def test_collect_nonexistent_results(self):
         with self.assertRaises(ffmpegException):
             self.stream_operator._collect_files(self.tempdir,
-                                                ['/tmp/testtest_TC.m3u8',
-                                                 '/tmp/testtest_TC.ts'])
+                                                ['/tmp/testtest_TC.ts'])
 
     def test_collect_files_second_result_nonexistent(self):
         result_path = self.RESOURCE_STREAM.replace(
@@ -136,16 +135,13 @@ class TestffmpegTranscoding(TempDirFixture, DockerTestCase):
         with self.assertRaises(ffmpegException):
             self.stream_operator._prepare_merge_job(
                 self.tempdir,
-                [
-                    '/tmp/testtest_TC.m3u8',
-                    '/tmp/testtest_TC.ts',
-                ])
+                ['/tmp/testtest_TC.ts'])
 
     def test_merge_and_replace_nonexistent_files(self):
         with self.assertRaises(ffmpegException):
             self.stream_operator.merge_and_replace_video_streams(
                 self.RESOURCE_STREAM,
-                ['test_TC.m3u8', 'test_TC.ts'],
+                ['test_TC.ts'],
                 'output.mp4',
                 self.tempdir)
 
