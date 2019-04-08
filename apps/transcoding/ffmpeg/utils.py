@@ -77,9 +77,6 @@ class StreamOperator:
                                         dir_manager: DirManager,
                                         task_id: str):
 
-        assert os.path.isfile(input_file_on_host), \
-            "Caller is responsible for ensuring that input file exists."
-
         host_dirs = {
             'tmp': dir_manager.get_task_temporary_dir(task_id),
             'output': dir_manager.get_task_output_dir(task_id),
