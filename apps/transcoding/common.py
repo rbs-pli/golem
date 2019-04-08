@@ -54,6 +54,21 @@ class Container(Enum):
     MKV = 'mkv'
     TS = 'ts'
 
+    WMV = 'wmv'
+    MOV = 'mov'
+    FLV = 'flv'
+    MPEG = 'mpeg'
+    MTS = 'mts'
+    MPG = 'mpg'
+    GP = '3gp'
+    M4V = 'm4v'
+    VOB = 'vob'
+    WEBM = 'webm'
+
+
+
+
+
     @staticmethod
     @HandleValueError(unsupported)
     def from_name(name: str) -> 'Container':
@@ -73,6 +88,21 @@ CONTAINER_SUPPORTED_CODECS = {
     Container.MP4: ([VideoCodec.H_264, VideoCodec.H_265, VideoCodec.HEVC,
                      VideoCodec.MPEG_1, VideoCodec.MPEG_2, VideoCodec.MPEG_4],
                     [AudioCodec.AAC, AudioCodec.MP3]),
+
+
+    Container.WMV: ([], []),
+    Container.MOV: ([VideoCodec.H_265], []),
+    Container.FLV: ([], []),
+    Container.MPEG: ([], []),
+
+
+    Container.MTS: ([], []),
+    Container.MPG: ([], []),
+    Container.GP: ([], []),
+    Container.M4V: ([], []),
+    Container.VOB: ([], []),
+    Container.WEBM: ([], []),
+
 }
 
 

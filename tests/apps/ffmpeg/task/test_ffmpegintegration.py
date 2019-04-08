@@ -35,7 +35,8 @@ class FfmpegIntegrationTestCase(TestTaskIntegration):
             'options': {
                 'output_path': os.path.dirname(result_file),
                 'video': {
-                    'codec': 'h265',
+                    # 'codec': 'h265',
+                    # TODO poprawić nadpisywanie
                     'resolution': [320, 240],
                     'frame_rate': "25"
                 },
@@ -78,54 +79,56 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
 
 
         files = [
-            "wmv/Catherine_Part1(codec=wmv3).wmv",
-            "wmv/Video1(codec=wmv1).wmv",
-            "wmv/grb_2(codec=wmv2)_video_stream_only.wmv",
-            "wmv/small(codec=wmv2).wmv",
+                # "wmv/Catherine_Part1(codec=wmv3).wmv",
+            # "wmv/Video1(codec=wmv1).wmv",
+            # "wmv/grb_2(codec=wmv2)_video_stream_only.wmv",
+            #     "wmv/small(codec=wmv2).wmv",
             "mov/DLP_PART_2_768k[codec=h264].mov",
-            "mov/P6090053[codec=mjpeg].mov",
-            "mov/small[codec=h264].mov",
-            "flv/grb_2[codec=flv]_only_video_stream.flv",
-            "flv/video-sample[codec=flv]!_audio_codec_unknow!.flv",
-            "flv/jellyfish-25-mbps-hd-hevc[codec=flv]_only_video_stream.flv",
+            # "mov/P6090053[codec=mjpeg].mov",
+            # "mov/small[codec=h264].mov",
+            #     "flv/grb_2[codec=flv]_only_video_stream.flv",
+            # "flv/video-sample[codec=flv]!_audio_codec_unknow!.flv",
+            # "flv/jellyfish-25-mbps-hd-hevc[codec=flv]_only_video_stream.flv",
             "flv/star_trails[codec=flv].flv",
-            "flv/page18-movie-4[codec=flv].flv",
-            "mpeg/lion-sample[codec=mpeg1video].mpeg",
-            "mpeg/small[codec=mpeg2video]_3_streams_!_Unsupported codec_!.mpeg",
-            "mpeg/TRA3106[codec=mpeg2video]_video_and_data_stream_!_Unsupported codec_!.mpeg",
-            "mpeg/metaxas-keller-Bell[codec=mpeg2video]_3_streams_!_Unsupported codec_!.mpeg",
-            "mts/small(codec=h264).mts",
-            "mts/Panasonic_HDC_TM_700_P_50i(codec=h264)_video_audio_subtitles_streams.mts",
-            "mts/video-sample(codec=h264)_only_video_stream.mts",
-            "mpg/TRA3106[codec=mpeg2video]_video_and_data_stream_@_Unsupported codec_@.mpg",
-            "mpg/video-sample[codec=mpeg2video]_video_and_data_stream_@_Unsupported codec_@.mpg",
-            "mpg/grb_2[codec=mpeg2video]_only_video_stream.mpg",
-            "mpg/small[codec=mpeg2video]_3_streams_@_Unsupported codec_@.mpg",
-            "3gp/star_trails[codec=h263].3gp",
-            "3gp/TRA3106[codec=h263]_only_video_stream.3gp",
-            "3gp/small[codec=h263].3gp",
-            "3gp/page18-movie-4[codec=h263].3gp",
-            "3gp/dolbycanyon[codec=h263].3gp",
-            "3gp/jellyfish-25-mbps-hd-hevc[codec=h263]_only_video_stream.3gp",
-            "m4v/page18-movie-4[codec=h264]_audio_video_index_reverse.m4v",
-            "m4v/small[codec=h264].m4v",
+            # "flv/page18-movie-4[codec=flv].flv",
+            #
+            # "mpeg/lion-sample[codec=mpeg1video].mpeg",
+            # "mpeg/small[codec=mpeg2video]_3_streams_!_Unsupported codec_!.mpeg",
+            # "mpeg/TRA3106[codec=mpeg2video]_video_and_data_stream_!_Unsupported codec_!.mpeg",
+            # "mpeg/metaxas-keller-Bell[codec=mpeg2video]_3_streams_!_Unsupported codec_!.mpeg",
+            #
+            # "mts/small(codec=h264).mts",
+            # "mts/Panasonic_HDC_TM_700_P_50i(codec=h264)_video_audio_subtitles_streams.mts",
+            # "mts/video-sample(codec=h264)_only_video_stream.mts",
+            # "mpg/TRA3106[codec=mpeg2video]_video_and_data_stream_@_Unsupported codec_@.mpg",
+            # "mpg/video-sample[codec=mpeg2video]_video_and_data_stream_@_Unsupported codec_@.mpg",
+            #     "mpg/grb_2[codec=mpeg2video]_only_video_stream.mpg",
+            # "mpg/small[codec=mpeg2video]_3_streams_@_Unsupported codec_@.mpg",
+            # "3gp/star_trails[codec=h263].3gp",
+            # "3gp/TRA3106[codec=h263]_only_video_stream.3gp",
+            # "3gp/small[codec=h263].3gp",
+            # "3gp/page18-movie-4[codec=h263].3gp",
+            # "3gp/dolbycanyon[codec=h263].3gp",
+            # "3gp/jellyfish-25-mbps-hd-hevc[codec=h263]_only_video_stream.3gp",
+            # "m4v/page18-movie-4[codec=h264]_audio_video_index_reverse.m4v",
+            #     "m4v/small[codec=h264].m4v",
             "m4v/grb_2[codec=h264]_only_video_stream.m4v",
-            "m4v/dolbycanyon[codec=h264].m4v",
-            "vob/small(codec=mpeg2video).vob",
-            "vob/grb_2(codec=mpeg2video)_video_stream_only.vob",
-            "vob/dolbycanyon(codec=mpeg2video)_3_streams_@_Unsupported codec_@.vob",
-            "webm/star_trails(codec=vp9).webm",
-            "webm/small(codec=vp8).webm",
-            "mkv/dolbycanyon[codec=h264].mkv",
-            "mkv/jellyfish-25-mbps-hd-hevc[codec=hevc]_only_video_stream.mkv",
-            "mkv/small[codec=h264].mkv",
-            "avi/Panasonic_HDC_TM_700_P_50i[codec=mpeg4].avi",
-            "avi/small[codec=mpeg4].avi",
-            "avi/TRA3106[codec=mjpeg]_only_video_stream.avi",
-            "avi/page18-movie-4[codec=mpeg4].avi",
-            "mp4/P6090053[codec=h264].mp4",
-            "mp4/dolbycanyon[codec=h264].mp4",
-            "mp4/small[codec=h264].mp4",
+            # "m4v/dolbycanyon[codec=h264].m4v",
+            # "vob/small(codec=mpeg2video).vob",
+            # "vob/grb_2(codec=mpeg2video)_video_stream_only.vob",
+            # "vob/dolbycanyon(codec=mpeg2video)_3_streams_@_Unsupported codec_@.vob",
+            #     "webm/star_trails(codec=vp9).webm",
+            # "webm/small(codec=vp8).webm",
+            # "mkv/dolbycanyon[codec=h264].mkv",
+            # "mkv/jellyfish-25-mbps-hd-hevc[codec=hevc]_only_video_stream.mkv",
+            # "mkv/small[codec=h264].mkv",
+            # "avi/Panasonic_HDC_TM_700_P_50i[codec=mpeg4].avi",
+            # "avi/small[codec=mpeg4].avi",
+            #     "avi/TRA3106[codec=mjpeg]_only_video_stream.avi",
+            # "avi/page18-movie-4[codec=mpeg4].avi",
+            # "mp4/P6090053[codec=h264].mp4",
+            # "mp4/dolbycanyon[codec=h264].mp4",
+            # "mp4/small[codec=h264].mp4",
         ]
 
         print('\n\n')
@@ -140,7 +143,7 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
             try:
                 self.execute_task(task_def)
             except Exception as e:
-                print(f'|{filename_to_print:85}|{str(e):50}|')
+                print(f'| {filename_to_print:85}|{str(e):45}|')
             else:
                 reports = FfprobeFormatReport.build(source_path, result_path)
 
@@ -149,10 +152,9 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
 
                 diff = report_referenced.diff(report_new, {})
                 if diff == {}:
-                    print(f'|{filename_to_print:85}|{"OK":50}|')
+                    print(f'| {filename_to_print:85}|{"OK":45}|')
                 else:
-                    print(f'|{filename_to_print:85}|difference in: {diff["attribute"]:35}|')
-
+                    print(f'| {filename_to_print:85}|difference in: {diff["attribute"]:30}|')
 
 
 

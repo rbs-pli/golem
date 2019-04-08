@@ -30,7 +30,11 @@ class FfprobeFormatReport:
 
     @property
     def start_time(self):
-        return self._raw_report['format']['start_time']
+        try:
+            return self._raw_report['format']['start_time']
+        except KeyError:
+            return 'not supported- key does not exists'
+
 
     def diff(self, format_report: dict, overrides: dict):
         differences = dict()
