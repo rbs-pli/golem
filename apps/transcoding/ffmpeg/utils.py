@@ -123,9 +123,9 @@ class StreamOperator:
             params = json.load(f)  # FIXME: check status of splitting
             if params.get('status', 'Success') != 'Success':
                 raise ffmpegException('Splitting video failed')
-            streams_list = list(map(lambda x: (x.get('video_segment'),
-                                               x.get('playlist')),
-                                    params.get('segments', [])))
+            streams_list = list(
+                map(lambda x: x.get('video_segment')),
+                params.get('segments', []))
             logger.info(
                 f"Stream {input_file_on_host} has successfully passed the "
                 f"extract+split operation. Segments: {streams_list}")
