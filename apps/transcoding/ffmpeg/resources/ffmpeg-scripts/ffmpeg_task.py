@@ -66,7 +66,7 @@ def do_split(path_to_stream, parts):
 
     results = {
         'main_list': segment_list_path,
-        'segments': [{'video_segment': s for s in segment_filenames}],
+        'segments': [{'video_segment': s} for s in segment_filenames],
     }
 
     results_file = os.path.join(OUTPUT_DIR, "split-results.json")
