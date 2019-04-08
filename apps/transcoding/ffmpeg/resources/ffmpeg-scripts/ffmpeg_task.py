@@ -62,7 +62,7 @@ def do_split(path_to_stream, parts):
         video_length / parts)
 
     with open(segment_list_path) as segment_list_file:
-        segment_filenames = segment_list_file.readlines()
+        segment_filenames = segment_list_file.read().splitlines()
 
     results = {
         'main_list': segment_list_path,
