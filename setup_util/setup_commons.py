@@ -209,7 +209,7 @@ def get_long_description(my_path):
     Read readme file
     :return: Content of the README file
     """
-    with open(path.join(my_path, 'README.md'), encoding='utf-8') as f:
+    with open(path.join(my_path, 'report.md'), encoding='utf-8') as f:
         read = f.read()
     return read
 

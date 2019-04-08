@@ -35,7 +35,7 @@ class FfprobeFormatReport:
     def diff(self, format_report: dict, overrides: dict):
         differences = dict()
         for attr in ['stream_types', 'duration', 'start_time']:
-
+            # TODO zrobic zmienna lokalna
             original_value = getattr(self, attr)
             modified_value = getattr(format_report, attr)
 

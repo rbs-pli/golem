@@ -179,8 +179,9 @@ class StreamOperator:
                 os.makedirs(_output_dir)
                 os.makedirs(_work_dir)
             except OSError:
-                raise ffmpegException("Failed to prepare video \
-                           directory structure")
+                pass
+                # raise ffmpegException("Failed to prepare video \
+                #            directory structure")
             return _resources_dir, _work_dir, _output_dir
 
         res_dir, work_dir, output_dir = _prepare_dir_mapping()
@@ -206,7 +207,5 @@ class StreamOperator:
                                                            logs=work_dir,
                                                            work=work_dir)
         result = self._do_job_in_container(dir_mapping, extra_data)
-        print(f'\n\n********* result: \n {result}')
-
         return result
 
