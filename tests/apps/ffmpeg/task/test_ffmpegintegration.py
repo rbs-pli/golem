@@ -140,7 +140,7 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
             try:
                 self.execute_task(task_def)
             except Exception as e:
-                print(f'| {filename_to_print} | {e} |')
+                print(f'|{filename_to_print:85}|{str(e):50}|')
             else:
                 reports = FfprobeFormatReport.build(source_path, result_path)
 
@@ -149,9 +149,9 @@ class TestffmpegIntegration(FfmpegIntegrationTestCase):
 
                 diff = report_referenced.diff(report_new, {})
                 if diff == {}:
-                    print(f'| {filename_to_print} | OK |')
+                    print(f'|{filename_to_print:85}|{"OK":50}|')
                 else:
-                    print(f'| {filename_to_print} | difference in: {diff["attribute"]} |')
+                    print(f'|{filename_to_print:85}|difference in: {diff["attribute"]:35}|')
 
 
 
