@@ -1,14 +1,60 @@
+from typing import Optional
 import json
+import re
 import os
 
 # pylint: disable=import-error
-import ffmpeg_commands as ffmpeg
 import m3u8
-from m3u8_utils import create_and_dump_m3u8, join_playlists
+
+import ffmpeg_commands as ffmpeg
+from m3u8_utils import create_and_dump_m3u8
 
 OUTPUT_DIR = "/golem/output"
+WORK_DIR = "/golem/work"
 RESOURCES_DIR = "/golem/resources"
 PARAMS_FILE = "params.json"
+
+TRANSCODED_VIDEO_REGEX = re.compile(r'_(\d+)_TC\.[^.]+')
+FFCONCAT_LIST_BASENAME = "merge-input.ffconcat"
+
+
+# TMP: Share this between the host and the container
+def adjust_path(path: str, # pylint: disable=too-many-arguments
+                dirname: Optional[str] = None,
+                stem: Optional[str] = None,
+                extension: Optional[str] = None,
+                stem_prefix: str = '',
+                stem_suffix: str = ''):
+    """
+    Splits specified path into components and reassembles it back,
+    replacing some of those components with user-provided values and adding
+    perfixes and suffixes.
+
+    Path components
+    ---------------
+
+    # /golem/split/resources/video[num=10].reencoded.mp4
+    # =======================^^^^^^^^^^^^^^^^^^^^^^^####
+    #         dirname                  stem         extension
+    """
+
+    assert extension is None or extension == '' or extension.startswith('.'), \
+        "Just like in splitext(), the dot must be included in the extension"
+
+    (original_dirname, original_basename) = os.path.split(path)
+    (original_stem, original_extension) = os.path.splitext(original_basename)
+
+    new_dirname = original_dirname if dirname is None else dirname
+    new_stem = original_stem if stem is None else stem
+    new_extension = original_extension if extension is None else extension
+
+    return os.path.join(
+        f"{new_dirname}",
+        f"{stem_prefix}{new_stem}{stem_suffix}{new_extension}")
+
+
+def do_extract(input_file, output_file, selected_streams):
+    ffmpeg.extract_streams(input_file, output_file, selected_streams)
 
 
 def do_split(path_to_stream, parts):
@@ -39,21 +85,86 @@ def do_split(path_to_stream, parts):
         json.dump(results, f)
 
 
+def do_extract_and_split(input_file, parts):
+    intermediate_file = adjust_path(
+        input_file,
+        dirname=WORK_DIR,
+        stem_suffix='[video-only]')
+
+    do_extract(input_file, intermediate_file, ['v'])
+    do_split(intermediate_file, parts)
+
+
 def do_transcode(track, targs, output, use_playlist):
     ffmpeg.transcode_video(track, targs, output, use_playlist)
 
 
 def do_merge(chunks, outputfilename):
-    [output_playlist, _] = os.path.splitext(
-        os.path.basename(outputfilename))
-    merged = join_playlists(chunks)
-    merged_filename = os.path.join(RESOURCES_DIR,
-                                   output_playlist + ".m3u8")
-    file = open(merged_filename, 'w')
-    file.write(merged.dumps())
-    file.close()
+    def select_transcoded_video_paths(output_file_paths, output_extension):
+        return [path
+                for path in output_file_paths
+                if path.endswith(f'_TC{output_extension}')]
 
-    ffmpeg.merge_videos(merged_filename, outputfilename)
+
+    def sorted_transcoded_video_paths(transcoded_video_paths):
+        path_index = {int(re.findall(TRANSCODED_VIDEO_REGEX, path)[0]): path
+                      for path in transcoded_video_paths}
+        return [value for key, value in sorted(path_index.items())]
+
+
+    def build_and_store_ffconcat_list(chunks, output_filename, list_basename):
+        assert len(chunks) >= 1
+        assert len(set(os.path.dirname(chunk) for chunk in chunks)) == 1, \
+            "Merge won't work if chunks are not all in the same directory"
+
+        # NOTE: The way the ffmpeg merge command works now, the list file
+        # must be in the same directory as the chunks.
+        list_filename = os.path.join(os.path.dirname(chunks[0]), list_basename)
+
+        [_output_basename, output_extension] = os.path.splitext(
+            os.path.basename(output_filename))
+
+        merge_input_files = sorted_transcoded_video_paths(
+            select_transcoded_video_paths(
+                chunks,
+                output_extension))
+        assert all("'" not in path for path in merge_input_files), \
+            "FIXME: Single quotes in file names are not supported yet"
+
+        ffconcat_entries = [f"file '{path}'" for path in merge_input_files]
+
+        with open(list_filename, 'w') as file:
+            file.write('\n'.join(ffconcat_entries))
+
+        return list_filename
+
+    ffconcat_list_filename = build_and_store_ffconcat_list(
+        chunks,
+        outputfilename,
+        FFCONCAT_LIST_BASENAME)
+    ffmpeg.merge_videos(ffconcat_list_filename, outputfilename)
+
+
+def do_replace(input_file,
+               replacement_source,
+               output_file,
+               stream_type):
+
+    ffmpeg.replace_streams(
+        input_file,
+        replacement_source,
+        output_file,
+        stream_type)
+
+
+def do_merge_and_replace(input_file, chunks, output_file):
+    intermediate_file = adjust_path(
+        output_file,
+        dirname=WORK_DIR,
+        stem_suffix='[video-only]')
+
+    do_merge(chunks, intermediate_file)
+    do_replace(input_file, intermediate_file, output_file, 'v')
 
 
 def compute_metric(cmd, function):
@@ -85,15 +196,43 @@ def compute_metrics(metrics_params):
 
 
 def run_ffmpeg(params):
-    if params['command'] == "split":
-        do_split(params['path_to_stream'], params['parts'])
+    if params['command'] == "extract":
+        do_extract(
+            params['input_file'],
+            params['output_file'],
+            params['selected_streams'])
+    elif params['command'] == "split":
+        do_split(
+            params['path_to_stream'],
+            params['parts'])
+    elif params['command'] == "extract_and_split":
+        do_extract_and_split(
+            params['input_file'],
+            params['parts'])
     elif params['command'] == "transcode":
-        do_transcode(params['track'], params['targs'],
-                     params['output_stream'], params['use_playlist'])
+        do_transcode(
+            params['track'],
+            params['targs'],
+            params['output_stream'],
+            params['use_playlist'])
     elif params['command'] == "merge":
-        do_merge(params['chunks'], params['output_stream'])
+        do_merge(
+            params['chunks'],
+            params['output_stream'])
+    elif params['command'] == "replace":
+        do_replace(
+            params['input_file'],
+            params['replacement_source'],
+            params['output_file'],
+            params['stream_type'])
+    elif params['command'] == "merge_and_replace":
+        do_merge_and_replace(
+            params['input_file'],
+            params['chunks'],
+            params['output_file'])
     elif params['command'] == "compute-metrics":
-        compute_metrics(params["metrics_params"])
+        compute_metrics(
+            params["metrics_params"])
     else:
         print("Invalid command.")
 

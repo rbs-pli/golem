@@ -25,7 +25,6 @@ class TestffmpegTask(TempDirFixture):
         self.RESOURCES = os.path.join(os.path.dirname(
             os.path.dirname(os.path.realpath(__file__))), 'resources')
 
-
         dm = DockerTaskThread.docker_manager = DockerManager.install()
         dm.update_config(
             status_callback=mock.Mock(),
@@ -33,16 +32,15 @@ class TestffmpegTask(TempDirFixture):
             work_dir=self.new_path,
             in_background=True)
 
-
-
         self.RESOURCE_STREAM = os.path.join(self.RESOURCES, 'test_video.mp4')
         self.tt = ffmpegTaskTypeInfo()
 
+    def _build_ffmpeg_task(self):
         td = self.tt.task_builder_type.build_definition(self.tt,
                                                         self._task_dictionary)
-        self.ffmpeg_task = self.tt.task_builder_type(dt_p2p_factory.Node(), td,
-                                                     DirManager(
-                                                         self.tempdir)).build()
+        return self.tt.task_builder_type(dt_p2p_factory.Node(), td,
+                                         DirManager(
+                                             self.tempdir)).build()
 
     @property
     def _task_dictionary(self):
@@ -158,25 +156,21 @@ class TestffmpegTask(TempDirFixture):
 
         self.assertEqual(td.output_file, '/tmp/test task.mp4')
 
-    def test_build_ffmpeg_task(self):
-        td = self.tt.task_builder_type.build_definition(self.tt,
-                                                        self._task_dictionary)
-        builder = self.tt.task_builder_type(dt_p2p_factory.Node(), td,
-                                            DirManager(self.tempdir))
-        builder.build()
-
     def test_invalid_extra_data(self):
+        ffmpeg_task = self._build_ffmpeg_task()
         with self.assertRaises(AssertionError):
-            self.ffmpeg_task._get_extra_data(1)
+            ffmpeg_task._get_extra_data(1)
 
     def test_extra_data(self):
+        ffmpeg_task = self._build_ffmpeg_task()
+
         d = self._task_dictionary
-        extra_data = self.ffmpeg_task._get_extra_data(0)
+        extra_data = ffmpeg_task._get_extra_data(0)
         self.assertEqual(extra_data['command'], Commands.TRANSCODE.value[0])
         self.assertEqual(extra_data['script_filepath'],
                          '/golem/scripts/ffmpeg_task.py')
         self.assertEqual(extra_data['track'],
-                         '/golem/resources/test_video[num=0].m3u8')
+                         '/golem/resources/test_video[video-only]_0.mp4')
         vargs = extra_data['targs']['video']
         aargs = extra_data['targs']['audio']
         self.assertEqual(vargs['codec'], d['options']['video']['codec'])
@@ -187,7 +181,8 @@ class TestffmpegTask(TempDirFixture):
                          d['options']['video']['frame_rate'])
         self.assertEqual(aargs['codec'], d['options']['audio']['codec'])
         self.assertEqual(aargs['bitrate'], d['options']['audio']['bit_rate'])
-        self.assertIn('m3u8', extra_data['output_stream'])
+        self.assertEqual(extra_data['output_stream'],
+                         '/golem/output/test_video[video-only]_0_TC.mp4')
 
     def test_less_subtasks_than_requested(self):
         d = self._task_dictionary
@@ -204,11 +199,13 @@ class TestffmpegTask(TempDirFixture):
         self.assertEqual(task.total_tasks, 1)
 
     def test_query_extra_data(self):
+        ffmpeg_task = self._build_ffmpeg_task()
+
         node_id = uuid.uuid4()
-        self.ffmpeg_task.header.task_id = str(uuid.uuid4())
-        extra_data = self.ffmpeg_task.query_extra_data(0.5, node_id)
+        ffmpeg_task.header.task_id = str(uuid.uuid4())
+        extra_data = ffmpeg_task.query_extra_data(0.5, node_id)
         ctd = extra_data.ctd
-        subtask = next(iter(self.ffmpeg_task.subtasks_given.values()))
+        subtask = next(iter(ffmpeg_task.subtasks_given.values()))
 
         self.assertEqual(subtask['perf'], 0.5)
         self.assertEqual(subtask['node_id'], node_id)
@@ -220,7 +217,7 @@ class TestffmpegTask(TempDirFixture):
         self.assertEqual(ctd['subtask_id'], subtask['subtask_id'])
         self.assertEqual(ctd['extra_data'], subtask['transcoding_params'])
         self.assertEqual(ctd['docker_images'], [di.to_dict() for di in
-                                                self.ffmpeg_task.docker_images])
+                                                ffmpeg_task.docker_images])
         self.assertEqual(ctd['deadline'], min(timeout_to_deadline(
-            self.ffmpeg_task.header.subtask_timeout),
-            self.ffmpeg_task.header.deadline))
+            ffmpeg_task.header.subtask_timeout),
+            ffmpeg_task.header.deadline))
