@@ -92,8 +92,8 @@ def do_extract_and_split(input_file, parts):
     do_split(intermediate_file, parts)
 
 
-def do_transcode(track, targs, output, use_playlist):
-    ffmpeg.transcode_video(track, targs, output, use_playlist)
+def do_transcode(track, targs, output):
+    ffmpeg.transcode_video(track, targs, output)
 
 
 def do_merge(chunks, outputfilename):
@@ -211,7 +211,6 @@ def run_ffmpeg(params):
             params['track'],
             params['targs'],
             params['output_stream'],
-            params['use_playlist'])
     elif params['command'] == "merge":
         do_merge(
             params['chunks'],
